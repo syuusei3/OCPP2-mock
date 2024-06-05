@@ -47,4 +47,7 @@ The server script uses the websockets and ocpp libraries to facilitate the WebSo
 
 ## Note
 
-This project is intended for testing purposes. The server and client scripts do not implement full OCPP compliance and should not be used in production without further development.
+Primarily, this software is intended for testing applications. The server and client scripts don't execute full OCPP adherence and it is advised not to use them in a production environment without additional development.
+
+For reference:
+https://github.com/mobilityhouse/ocpp
