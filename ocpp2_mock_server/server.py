@@ -1,31 +1,37 @@
 import asyncio
 import logging
 import websockets
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ocpp.routing import on
 from ocpp.v201 import ChargePoint as cp
 from ocpp.v201 import call_result
 from ocpp.v201.enums import RegistrationStatusType, GenericDeviceModelStatusType
 
+# Setting up the logging configuration to display debug level messages.
 logging.basicConfig(level=logging.DEBUG)
 
+# Define a ChargePoint class inheriting from the OCPP 2.0.1 ChargePoint class.
 class ChargePoint(cp):
+    # Define a handler for the BootNotification message.
     @on('BootNotification')
     async def on_boot_notification(self, charging_station, reason, **kwargs):
         logging.info("Received BootNotification")
+        # Create and return a BootNotification response with the current time,
+        # an interval of 10 seconds, and an accepted status.
         return call_result.BootNotification(
-            current_time=datetime.utcnow().isoformat(),
+            current_time = datetime.now(timezone.utc).isoformat(),
             interval=10,
             status=RegistrationStatusType.accepted
         )
 
+    # Define a handler for the GetBaseReport message.
     @on('GetBaseReport')
     async def on_get_base_report(self, request_id, report_base, **kwargs):
         try:
             logging.info(f"Received GetBaseReport request with RequestId: {request_id} and ReportBase: {report_base}")
 
-            # Mock response for demonstration purposes
+            # Create a mock response for demonstration purposes, indicating the report is accepted.
             response = call_result.GetBaseReport(
                 status=GenericDeviceModelStatusType.accepted
             )
@@ -33,11 +39,14 @@ class ChargePoint(cp):
             logging.info(f"Sending GetBaseReport response: {response}")
             return response
         except Exception as e:
+            # Log any errors that occur while handling the GetBaseReport request.
             logging.error(f"Error handling GetBaseReport request: {e}", exc_info=True)
+            # Return a rejected status in case of error.
             return call_result.GetBaseReport(
                 status=GenericDeviceModelStatusType.rejected
             )
 
+# Function to handle new WebSocket connections.
 async def on_connect(websocket, path):
     """ For every new charge point that connects, create a ChargePoint instance and start listening for messages. """
     try:
@@ -58,17 +67,23 @@ async def on_connect(websocket, path):
     charge_point_id = path.strip('/')
     cp = ChargePoint(charge_point_id, websocket)
 
+    # Start the ChargePoint instance to listen for incoming messages.
     await cp.start()
 
+# Main function to start the WebSocket server.
 async def main():
+    # Create the WebSocket server and specify the handler for new connections.
     server = await websockets.serve(
         on_connect,
-        '0.0.0.0',
-        9000,
-        subprotocols=['ocpp2.0.1']
+        '0.0.0.0',  # Listen on all available interfaces.
+        9000,       # Port number.
+        subprotocols=['ocpp2.0.1']  # Specify the OCPP 2.0.1 subprotocol.
     )
     logging.info("WebSocket Server Started")
+    # Wait for the server to close (runs indefinitely).
     await server.wait_closed()
 
+# Entry point of the script.
 if __name__ == '__main__':
+    # Run the main function to start the server.
     asyncio.run(main())
