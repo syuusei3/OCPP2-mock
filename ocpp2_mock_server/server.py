@@ -1,11 +1,15 @@
 import asyncio
 import logging
-from ocpp.v201 import ChargePoint as cp
-from ocpp.v201 import call_result
-from ocpp.routing import on
 import websockets
 
+from ocpp.routing import on
+from ocpp.v201 import ChargePoint as cp
+from ocpp.v201 import call_result
+
+
 logging.basicConfig(level=logging.INFO)
+
+
 
 class ChargePoint(cp):
     @on('BootNotification')
